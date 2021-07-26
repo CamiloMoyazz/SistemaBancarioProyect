@@ -100,11 +100,12 @@ public class transferirController extends HttpServlet {
         
         int numerocta = 0;
         int monto = 0;
+        int montoAbs = 0;
         String clave = "";
        
-        if(request.getParameter("destino-txt").isEmpty()){
+        if(request.getParameter("destino-txt").trim().isEmpty()){
             errores.add("Ingrese un Numero de Destino");
-        }else if(request.getParameter("destino-txt").equalsIgnoreCase(String.valueOf(cuenta.getNumerocta()))){
+        }else if(request.getParameter("destino-txt").trim().equalsIgnoreCase(String.valueOf(cuenta.getNumerocta()))){
             errores.add("No Puedes Transferir a tu Propia Cuenta!");
         }else{
              try{
@@ -114,17 +115,18 @@ public class transferirController extends HttpServlet {
         }
         }
        
-        if(request.getParameter("monto-txt").isEmpty()){
+        if(request.getParameter("monto-txt").trim().isEmpty()){
             errores.add("Ingrese un Monto Válido!");
         }else{
             try{
              monto = Integer.parseInt(request.getParameter("monto-txt"));
+             montoAbs = Math.abs(monto);
         }catch(Exception e){
             errores.add("Ingrese un Monto Valido! Solo Numeros!");
         }
         }
         
-        if(request.getParameter("clave-txt").isEmpty()){
+        if(request.getParameter("clave-txt").trim().isEmpty()){
             errores.add("Debe ingresar su Clave de Cuenta!");
         }else if(cuenta.getClavetransaccion().equalsIgnoreCase(request.getParameter("clave-txt"))){
              clave = request.getParameter("clave-txt");
@@ -138,17 +140,16 @@ public class transferirController extends HttpServlet {
         int lineaCreditoUsada = cuenta.getSaldolineacreditousado();
         
         
+        
         if(errores.isEmpty()){
             
             try{
-                
-
                 Cuenta cuentaOri = new Cuenta();
                 Cuenta cuentaDes = new Cuenta();
 
-                if((saldo - monto) < 0){
-                    lineaCredito -= monto ;
-                    lineaCreditoUsada += monto;
+                if((saldo - montoAbs) < 0){
+                    lineaCredito -= montoAbs ;
+                    lineaCreditoUsada += montoAbs;
                     
                     cuentaOri.setNumerocta(cuenta.getNumerocta());
                     cuentaOri.setSaldo(saldo);
@@ -158,19 +159,19 @@ public class transferirController extends HttpServlet {
                     transferir.updateLineaOrigen(cuentaOri);
                     
                     cuentaDes.setNumerocta(numerocta);
-                    cuentaDes.setSaldo(monto);
+                    cuentaDes.setSaldo(montoAbs);
                     transferir.updateCuentaDestino(cuentaDes);
                     
                 }else{
                     cuentaOri.setNumerocta(cuenta.getNumerocta());
-                    cuentaOri.setSaldo(cuenta.getSaldo() - monto);
+                    cuentaOri.setSaldo(cuenta.getSaldo() - montoAbs);
                     cuentaOri.setSaldolineacredito(lineaCredito);
                     cuentaOri.setSaldolineacreditousado(lineaCreditoUsada);
                     transferir.updateCuentaOrigen(cuentaOri);
                     
                     
                    cuentaDes.setNumerocta(numerocta);
-                   cuentaDes.setSaldo(monto);
+                   cuentaDes.setSaldo(montoAbs);
                    transferir.updateCuentaDestino(cuentaDes);
                 }   
 
@@ -180,13 +181,13 @@ public class transferirController extends HttpServlet {
 
                Movimientos moviOrigen = new Movimientos();
                moviOrigen.setCuentaFK(cuentaOri);
-               moviOrigen.setDescripcion("Transferencia por "+ monto);
+               moviOrigen.setDescripcion("Transferencia por "+ montoAbs);
                moviOrigen.setFecha(fecha);
 
 
                Movimientos moviDest = new Movimientos();
                moviDest.setCuentaFK(cuentaDes);
-               moviDest.setDescripcion("Deposito por $" + monto);
+               moviDest.setDescripcion("Deposito por $" + montoAbs);
                moviDest.setFecha(fecha);
 
                System.out.println(moviOrigen);
